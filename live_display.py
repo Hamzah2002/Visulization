@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 import queue
-import datetime
-
 
 def display_live_data(data_queue):
     """
@@ -12,15 +10,12 @@ def display_live_data(data_queue):
     - data_queue (queue.Queue): Queue containing the GPS data.
     """
     print("Starting live data visualization...")
-    # Load the rocket image and rotate it to align vertically (pointing upwards)
+
+    # Load the rocket image and rotate it to align vertically
     rocket_image_path = "rocket.png"  # Image file path
     rocket_img = Image.open(rocket_image_path).convert("RGBA")  # Ensure transparency
-
-    # Rotate and flip the image to face along the Z-axis (upright)
-    rocket_img = rocket_img.transpose(Image.FLIP_TOP_BOTTOM)  # Flip image vertically (180 degrees)
-    rocket_img = rocket_img.rotate(90, expand=True)  # Rotate 90 degrees to point upwards
-
-    rocket_img = rocket_img.resize((40, 120))  # Fixed size (in pixels)
+    rocket_img = rocket_img.rotate(90, expand=True)  # Rotate to point upward (Z-axis)
+    rocket_img = rocket_img.resize((40, 120))  # Fixed size
     rocket_img = np.array(rocket_img) / 255.0  # Normalize image for matplotlib
 
     # Ensure transparency (remove any black background artifacts)
@@ -45,6 +40,7 @@ def display_live_data(data_queue):
             if data is None:  # Stop signal received
                 print("Received stop signal. Visualization ending.")
                 break
+
             # Extract longitude, latitude, and altitude
             longitude, latitude, altitude = data
             print(f"Dequeued data: {longitude}, {latitude}, {altitude}")
@@ -70,7 +66,7 @@ def display_live_data(data_queue):
             )
             Z = np.full_like(X, img_z)  # Constant altitude for the image plane
 
-            # Adjust the position and size to align the rocket image upright along the Z-axis
+            # Add image as a surface
             ax.plot_surface(
                 X, Y, Z,
                 rstride=1, cstride=1,
@@ -78,11 +74,8 @@ def display_live_data(data_queue):
                 shade=False,
             )
 
-            # Add timestamp in the plot title
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            ax.set_title(f"Live Rocket Path - {timestamp}")
-
             plt.pause(0.05)  # Reduce lag with shorter pause time
+
         except queue.Empty:
             print("Queue is empty, waiting for data...")
             continue
